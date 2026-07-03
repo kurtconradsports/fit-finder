@@ -181,6 +181,23 @@ h1 {
   filter: saturate(0.45);
   transform: scale(0.985);
 }
+/* Research records (dev/preview only) — visibly provisional, dashed border,
+   never styled like a verdict. */
+.tile.research {
+  border-style: dashed;
+  border-color: var(--line-strong);
+  background: repeating-linear-gradient(
+    -45deg, var(--surface-dim), var(--surface-dim) 10px,
+    var(--surface) 10px, var(--surface) 20px);
+  opacity: 0.9;
+}
+.tile.research .tile-status { color: var(--muted); }
+.tile-research-note {
+  margin: 0;
+  font-size: 11.5px;
+  font-style: italic;
+  color: var(--muted);
+}
 
 .tile-head {
   display: flex;

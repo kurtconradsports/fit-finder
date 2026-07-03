@@ -16,17 +16,33 @@
      with "default: true" is the fallback. Order matters.
    - Tags are non-verdict context. They explain; they never rank.
 
-   SOURCE VERIFICATION STATUS
-   - Colombia / Costa Rica / Panama (the three eliminating rules): verified
-     2026-07-03 against the named legal instruments (`lastVerified` on each
-     source). The legal instrument name is the permanent fallback reference;
-     the URL is the official portal.
-   - Mexico / Ecuador (never eliminate): source refs still best-effort from
-     the July-3 cross-check — re-verify if their lines start doing more work.
-   If a route reclassifies, the tool's core claim changes with it.
+   CLAIM-LEVEL VERIFICATION (safety-critical)
+   - Every elimination carries a `verification` block. A country can be
+     HARD-ELIMINATED only when that block clears the evidence threshold in
+     engine.js (status official_source_confirmed|attorney_reviewed + route,
+     authority, official source, legal instrument, and a current check date).
+     Anything less SURVIVES — an unverified claim can never rule a place out.
+   - status values: official_source_confirmed · attorney_reviewed ·
+     needs_review · expired. A needs_review/expired claim must NOT carry a
+     lastChecked date (the validator fails the build if it does).
+   - Colombia / Costa Rica / Panama: status official_source_confirmed, from
+     operator-supplied legal instruments (2026-07-03). Independent attorney
+     review still recommended (professionalVerificationRecommended: true).
+   - Mexico / Ecuador: never eliminate; their survive-claim sources are
+     needs_review (no confirmed date) — informational, not authoritative.
+   - New research countries live behind settings.includeResearchCountries
+     (default false) and never appear in production results.
    ===================================================================== */
 
-window.FIT_RULES = {
+var FIT_RULES = {
+
+  /* Global switches. includeResearchCountries stays FALSE in production;
+     app.js flips it true only in dev/preview mode, where research records
+     are clearly labelled and blocked from authoritative verdicts. */
+  settings: {
+    includeResearchCountries: false,
+    staleAfterDays: 400
+  },
 
   copy: {
     headline: "Which Latin American countries survive your non-negotiables?",
@@ -123,10 +139,27 @@ window.FIT_RULES = {
     {
       id: "mexico",
       name: "Mexico",
+      research: false,
       eliminations: [],  /* never eliminates (MVP) */
       source: {
         label: "gob.mx — SRE, Visa de Residencia Temporal (SRE260)",
         url: "https://www.gob.mx/tramites/ficha/visa-de-residencia-temporal/SRE260"
+      },
+      /* Survive-claim metadata (informational; never eliminates). No
+         confirmed check date → needs_review, so NO lastChecked. */
+      verification: {
+        status: "needs_review",
+        routeName: "Residencia Temporal (SRE260)",
+        claim: "Temporary Resident up to 4 yrs, convertible to permanent; financial requirement is consulate-set and varies.",
+        governmentAuthority: "Secretaría de Relaciones Exteriores (SRE)",
+        sourceTitle: "Visa de Residencia Temporal (SRE260)",
+        sourceUrl: "https://www.gob.mx/tramites/ficha/visa-de-residencia-temporal/SRE260",
+        legalInstrument: null,
+        lastChecked: null,
+        reviewedBy: null,
+        reviewNotes: "Best-effort from July-3 cross-check; figures are consulate-set. Re-verify before this line does authoritative work.",
+        confidence: "medium",
+        professionalVerificationRecommended: true
       },
       survivorNotes: [
         {
@@ -140,6 +173,7 @@ window.FIT_RULES = {
     {
       id: "costa_rica",
       name: "Costa Rica",
+      research: false,
       eliminations: [
         {
           when: { residency: ["permanent"], income: ["remote", "self_employed"] },
@@ -151,6 +185,20 @@ window.FIT_RULES = {
             label: "Ley 10008 — Estancia para Trabajadores Remotos (DGME)",
             url: "https://www.migracion.go.cr/",
             lastVerified: "2026-07-03"
+          },
+          verification: {
+            status: "official_source_confirmed",
+            routeName: "Estancia para Trabajadores Remotos (No Residente)",
+            claim: "The remote-worker category is classified No Residente / Estancia — a non-resident stay, not a route to permanent residence.",
+            governmentAuthority: "Dirección General de Migración y Extranjería (DGME)",
+            sourceTitle: "Ley 10008 — Estancia para Trabajadores Remotos",
+            sourceUrl: "https://www.migracion.go.cr/",
+            legalInstrument: "Ley 10008 (2021)",
+            lastChecked: "2026-07-03",
+            reviewedBy: "Kurt Conrad — operator-supplied legal instrument, 2026-07-03",
+            reviewNotes: "Portal returns 403 to bots; loads in a normal browser. Independent attorney review recommended.",
+            confidence: "high",
+            professionalVerificationRecommended: true
           }
         }
       ],
@@ -181,6 +229,7 @@ window.FIT_RULES = {
     {
       id: "panama",
       name: "Panama",
+      research: false,
       eliminations: [
         {
           when: { residency: ["permanent"], income: ["remote", "self_employed"] },
@@ -192,6 +241,20 @@ window.FIT_RULES = {
             label: "Decreto Ejecutivo 198 de 2021 — Visa de Corta Estancia para Trabajadores Remotos (SNM)",
             url: "https://www.migracion.gob.pa/",
             lastVerified: "2026-07-03"
+          },
+          verification: {
+            status: "official_source_confirmed",
+            routeName: "Visa de Corta Estancia para Trabajadores Remotos",
+            claim: "The short-stay remote-worker route (up to 9 months, renewable) does not itself provide a path to permanent residence.",
+            governmentAuthority: "Servicio Nacional de Migración (SNM)",
+            sourceTitle: "Decreto Ejecutivo 198 de 2021 — Visa de Corta Estancia para Trabajadores Remotos",
+            sourceUrl: "https://www.migracion.gob.pa/",
+            legalInstrument: "Decreto Ejecutivo 198 de 2021",
+            lastChecked: "2026-07-03",
+            reviewedBy: "Kurt Conrad — operator-supplied legal instrument, 2026-07-03",
+            reviewNotes: "Official portal reachable (HTTP 200). Independent attorney review recommended.",
+            confidence: "high",
+            professionalVerificationRecommended: true
           }
         }
       ],
@@ -222,6 +285,7 @@ window.FIT_RULES = {
     {
       id: "colombia",
       name: "Colombia",
+      research: false,
       eliminations: [
         {
           when: { residency: ["permanent"], income: ["remote", "self_employed"] },
@@ -233,6 +297,20 @@ window.FIT_RULES = {
             label: "Resolución 5477 de 2022 (Cancillería) — Visa V Nómadas Digitales",
             url: "https://visa.cancilleria.gov.co/",
             lastVerified: "2026-07-03"
+          },
+          verification: {
+            status: "official_source_confirmed",
+            routeName: "Visa V — Nómadas Digitales (Visitor visa)",
+            claim: "The digital-nomad visa is a Visitor (V) visa — up to 2 years — that grants no residency status.",
+            governmentAuthority: "Ministerio de Relaciones Exteriores (Cancillería)",
+            sourceTitle: "Resolución 5477 de 2022 — Visa V Nómadas Digitales",
+            sourceUrl: "https://visa.cancilleria.gov.co/",
+            legalInstrument: "Resolución 5477 de 2022",
+            lastChecked: "2026-07-03",
+            reviewedBy: "Kurt Conrad — operator-supplied legal instrument, 2026-07-03",
+            reviewNotes: "Portal did not respond to an automated fetch (000) on 2026-07-03; confirm it loads in a browser. Legal instrument name is the durable reference. Independent attorney review recommended.",
+            confidence: "medium",
+            professionalVerificationRecommended: true
           }
         }
       ],
@@ -263,10 +341,27 @@ window.FIT_RULES = {
     {
       id: "ecuador",
       name: "Ecuador",
+      research: false,
       eliminations: [],  /* never eliminates (MVP) */
       source: {
         label: "Ministerio del Trabajo (SBU 2026) · immigration regulation",
         url: "https://www.trabajo.gob.ec/"
+      },
+      /* Survive-claim carries specific dollar figures → needs_review (SBU
+         changes yearly). Informational only; NO lastChecked. */
+      verification: {
+        status: "needs_review",
+        routeName: "Remote-worker residence pathway",
+        claim: "Remote-worker pathway ≈ 3× the Basic Salary (2026 SBU $482 → ~$1,446/mo, +~$250/dependent); permanent residency possible after >21 months temporary.",
+        governmentAuthority: "Ministerio del Trabajo (SBU) · immigration regulation",
+        sourceTitle: "Ministerio del Trabajo — Salario Básico Unificado 2026",
+        sourceUrl: "https://www.trabajo.gob.ec/",
+        legalInstrument: null,
+        lastChecked: null,
+        reviewedBy: null,
+        reviewNotes: "Contains dollar figures that go stale annually (SBU resets each year). Verify the current SBU and multiplier before this line does authoritative work.",
+        confidence: "medium",
+        professionalVerificationRecommended: true
       },
       survivorNotes: [
         {
@@ -285,10 +380,28 @@ window.FIT_RULES = {
     {
       id: "uruguay",
       name: "Uruguay",
+      research: false,
       /* NEVER eliminates (PRD v1.1+): affordability is a modeled judgment,
          not a documented legal fact. Warning tag only. */
       eliminations: [],
       source: null,
+      /* Warning-only country: the cost claim is a modeled judgment, not a
+         legal fact, so it intentionally has no official source and never
+         eliminates. needs_review + NO lastChecked keeps it honest. */
+      verification: {
+        status: "needs_review",
+        routeName: null,
+        claim: "Highest-cost country on this list — budget pressure warning (modeled, not a legal conflict).",
+        governmentAuthority: null,
+        sourceTitle: null,
+        sourceUrl: null,
+        legalInstrument: null,
+        lastChecked: null,
+        reviewedBy: null,
+        reviewNotes: "Warning tag only — by design has no legal source and can never hard-eliminate (cost is context, never a verdict).",
+        confidence: "low",
+        professionalVerificationRecommended: false
+      },
       survivorNotes: [
         {
           /* budget_pressure fires up to $4,500/mo for couples/families.
@@ -304,6 +417,479 @@ window.FIT_RULES = {
           tags: [],
           line: "No hard route conflict on these answers. The highest-cost country on this list — verify costs against a specific city."
         }
+      ]
+    },
+
+    /* ============================================================
+       RESEARCH COUNTRIES (Stage: 2026-07-03) — all research:true,
+       hidden from production, eliminations:[] so none can rule out.
+       routes[] stage the confirmed/needs_review claims for later
+       conversion. Nothing here is public until research:false.
+       ============================================================ */
+
+    {
+      id: "chile",
+      name: "Chile",
+      research: true,
+      coverage: "partial",            /* confirmed routes exist, but coverage incomplete (no remote route located) */
+      eliminations: [],
+      governingLaw: "Ley 21.325 (Migración y Extranjería) + Decreto 177/2022 (reglamento)",
+      authority: "Servicio Nacional de Migraciones (SERMIG)",
+      routes: [
+        {
+          routeName: "Extranjeros jubilados y rentistas",
+          servesIncomeTypes: ["pension", "savings"],
+          officialServesDescription: "Pension/retirement plus qualifying passive rent/investment income.",
+          verification: {
+            status: "official_source_confirmed",
+            governmentAuthority: "Servicio Nacional de Migraciones (SERMIG)",
+            legalInstrument: "Ley 21.325 + Decreto 177/2022",
+            sourceTitle: "Residencia temporal — Jubilados y rentistas",
+            sourceUrl: "https://serviciomigraciones.cl/residencia-temporal/subcategorias/jubilados-y-rentistas/",
+            lastChecked: "2026-07-03",
+            reviewedBy: "deep-research cross-check 2026-07-03",
+            confidence: "high",
+            uncertaintyNotes: "SERMIG publishes no fixed amount; solvency assessed case-by-case.",
+            professionalVerificationRecommended: true
+          },
+          permanence: {
+            pathType: "eligible_to_apply",
+            eligibleToApply: true,
+            standardEligibilityMonths: 24,
+            possibleReducedEligibilityMonths: 12,
+            reductionIsDiscretionary: true,
+            approvalGuaranteed: false,
+            presenceRequirements: null,
+            absenceCancellationRules: null,
+            notes: "Art.79 Ley 21.325 + Art.66 reglamento — reduced timeline requires a founded resolution of the SERMIG Director; not automatic."
+          },
+          threshold: {
+            thresholdType: "case_by_case_solvency",
+            localAmount: null, localCurrency: null,
+            calculationBasis: "'Sufficient to meet basic needs' — SERMIG publishes no fixed amount.",
+            effectiveDate: null,
+            usdEstimate: null, usdEstimateDate: null, usdEstimateSource: null,
+            thresholdNotes: "Do NOT insert third-party dollar estimates as a legal threshold."
+          },
+          notes: null
+        },
+        {
+          routeName: "Personas que desarrollan actividades lícitas remuneradas",
+          servesIncomeTypes: [],   /* local employed work + cuenta propia — NOT foreign remote employment */
+          officialServesDescription: "Local employed work and cuenta propia activity as described by the official page. Does NOT map to foreign remote employment.",
+          verification: {
+            status: "official_source_confirmed",
+            governmentAuthority: "Servicio Nacional de Migraciones (SERMIG)",
+            legalInstrument: "Ley 21.325 + Decreto 177/2022",
+            sourceTitle: "Residencia temporal — Actividades remuneradas",
+            sourceUrl: "https://serviciomigraciones.cl/residencia-temporal/subcategorias/actividades-remuneradas/",
+            lastChecked: "2026-07-03",
+            reviewedBy: "deep-research cross-check 2026-07-03",
+            confidence: "high",
+            uncertaintyNotes: "Official scope is local remunerated activity; do NOT map to foreign remote employment.",
+            professionalVerificationRecommended: true
+          },
+          permanence: {
+            pathType: "eligible_to_apply", eligibleToApply: true,
+            standardEligibilityMonths: 24, possibleReducedEligibilityMonths: 12,
+            reductionIsDiscretionary: true, approvalGuaranteed: false,
+            presenceRequirements: null, absenceCancellationRules: null,
+            notes: "Reduced timeline discretionary (SERMIG Director resolution)."
+          },
+          threshold: {
+            thresholdType: "case_by_case_solvency",
+            localAmount: null, localCurrency: null,
+            calculationBasis: "Case-by-case solvency; no fixed published amount.",
+            effectiveDate: null, usdEstimate: null, usdEstimateDate: null, usdEstimateSource: null,
+            thresholdNotes: "No fixed legal threshold published."
+          },
+          notes: "Do NOT map to foreign remote employment."
+        },
+        {
+          routeName: "Inversionistas",
+          servesIncomeTypes: ["savings", "self_employed"],
+          officialServesDescription: "Savings/investment; self-employed applies only where the applicant is legal representative or senior management of the investing company.",
+          verification: {
+            status: "official_source_confirmed",
+            governmentAuthority: "Servicio Nacional de Migraciones (SERMIG)",
+            legalInstrument: "Ley 21.325 + Decreto 177/2022",
+            sourceTitle: "Residencia temporal — Inversionistas",
+            sourceUrl: "https://serviciomigraciones.cl/residencia-temporal/subcategorias/inversionistas/",
+            lastChecked: "2026-07-03",
+            reviewedBy: "deep-research cross-check 2026-07-03",
+            confidence: "high",
+            uncertaintyNotes: "self_employed mapping applies only as legal rep / senior management of the investing company.",
+            professionalVerificationRecommended: true
+          },
+          permanence: {
+            pathType: "eligible_to_apply", eligibleToApply: true,
+            standardEligibilityMonths: 24, possibleReducedEligibilityMonths: 12,
+            reductionIsDiscretionary: true, approvalGuaranteed: false,
+            presenceRequirements: null, absenceCancellationRules: null,
+            notes: "Reduced timeline discretionary (SERMIG Director resolution)."
+          },
+          threshold: {
+            thresholdType: "fixed_amount",
+            localAmount: 500000, localCurrency: "USD",
+            calculationBasis: "Productive investment (Decreto 177/2022).",
+            effectiveDate: null,
+            usdEstimate: null, usdEstimateDate: null, usdEstimateSource: null,
+            thresholdNotes: "USD is the stated currency of the productive-investment figure, not a third-party estimate."
+          },
+          notes: null
+        }
+      ],
+      absenceOfEvidence: [
+        {
+          routeName: "Dedicated foreign remote-work route",
+          status: "not_verified",
+          routeLocated: false,
+          note: "None located on the SERMIG subcategory list. Absence of evidence, NOT proof none exists — must never generate an elimination or a country-wide 'no remote route' claim."
+        }
+      ],
+      verification: {
+        status: "needs_review",
+        routeName: null,
+        claim: "Country coverage assembled from confirmed routes; not production-ready.",
+        governmentAuthority: "Servicio Nacional de Migraciones (SERMIG)",
+        sourceTitle: null, sourceUrl: null, legalInstrument: null,
+        lastChecked: null, reviewedBy: null,
+        reviewNotes: "Routes confirmed; remote-work coverage unresolved. Country stays hidden until routes are wired and reviewed.",
+        confidence: "medium", professionalVerificationRecommended: true
+      },
+      survivorNotes: [
+        { default: true, tags: [], line: "Research record — Chile routes staged (jubilados/rentistas, actividades remuneradas, inversionistas confirmed; remote-work route not located). Hidden from visitors." }
+      ]
+    },
+
+    {
+      id: "argentina",
+      name: "Argentina",
+      research: true,
+      coverage: "partial",
+      eliminations: [],
+      governingLaw: "Ley 25.871 + Decreto 616/2010",
+      authority: "Dirección Nacional de Migraciones (DNM)",
+      routes: [
+        {
+          routeName: "Residencia temporaria como rentista (Art. 23 b)",
+          servesIncomeTypes: ["savings"],
+          officialServesDescription: "Income from assets/patrimony only. The official page EXPLICITLY EXCLUDES 'retribuciones obtenidas por el trabajo personal' (personal-work compensation).",
+          verification: {
+            status: "official_source_confirmed",
+            governmentAuthority: "Dirección Nacional de Migraciones (DNM)",
+            legalInstrument: "Ley 25.871 Art. 23(b) + Decreto 616/2010",
+            sourceTitle: "Obtener una residencia temporaria como rentista",
+            sourceUrl: "https://www.argentina.gob.ar/servicio/obtener-una-residencia-temporaria-como-rentista",
+            lastChecked: "2026-07-03",
+            reviewedBy: "deep-research cross-check 2026-07-03",
+            confidence: "high",
+            uncertaintyNotes: "Explicitly excludes personal-work compensation — do NOT map remote/self-employed personal income here.",
+            professionalVerificationRecommended: true
+          },
+          permanence: {
+            pathType: "eligible_to_apply", eligibleToApply: true,
+            standardEligibilityMonths: 36, possibleReducedEligibilityMonths: null,
+            reductionIsDiscretionary: false, approvalGuaranteed: false,
+            presenceRequirements: "Must be physically present >50% of the granted residence period; no absence ≥6 consecutive months.",
+            absenceCancellationRules: "Informational (dated): DNU 366/2025 (28 May 2025) — permanent residency cancelled if holder absent ≥1 year. Informational legal note ONLY; must NOT generate an elimination unless separately and precisely encoded.",
+            notes: "3 yrs continuous temporary residence (non-MERCOSUR arraigo), Decreto 616/2010 + DNM FAQ."
+          },
+          threshold: {
+            thresholdType: "minimum_wage_multiple",
+            localAmount: null, localCurrency: "ARS",
+            calculationBasis: "5x SMVM",
+            effectiveDate: null,
+            usdEstimate: null, usdEstimateDate: null, usdEstimateSource: null,
+            thresholdNotes: "Set by Disposición DNM 1732/2023 (mod. 3446/2023). SMVM value updatable — do NOT hard-code a USD equivalent as the legal threshold; store localAmount + effectiveDate when the SMVM figure is confirmed."
+          },
+          notes: null
+        },
+        {
+          routeName: "Residencia temporaria como pensionado (Art. 23 c)",
+          servesIncomeTypes: ["pension"],
+          officialServesDescription: "Pension/retirement income.",
+          verification: {
+            status: "official_source_confirmed",
+            governmentAuthority: "Dirección Nacional de Migraciones (DNM)",
+            legalInstrument: "Ley 25.871 Art. 23(c) + Decreto 616/2010",
+            sourceTitle: "Obtener una residencia temporaria como pensionado",
+            sourceUrl: "https://www.argentina.gob.ar/servicio/obtener-una-residencia-temporaria-como-pensionado",
+            lastChecked: "2026-07-03",
+            reviewedBy: "deep-research cross-check 2026-07-03",
+            confidence: "high",
+            uncertaintyNotes: null,
+            professionalVerificationRecommended: true
+          },
+          permanence: {
+            pathType: "eligible_to_apply", eligibleToApply: true,
+            standardEligibilityMonths: 36, possibleReducedEligibilityMonths: null,
+            reductionIsDiscretionary: false, approvalGuaranteed: false,
+            presenceRequirements: "Must be physically present >50% of the granted residence period; no absence ≥6 consecutive months.",
+            absenceCancellationRules: "Informational (dated): DNU 366/2025 (28 May 2025) — permanent residency cancelled if holder absent ≥1 year. Informational legal note ONLY; must NOT generate an elimination.",
+            notes: "3 yrs continuous temporary residence (non-MERCOSUR)."
+          },
+          threshold: {
+            thresholdType: "minimum_wage_multiple",
+            localAmount: null, localCurrency: "ARS",
+            calculationBasis: "5x SMVM",
+            effectiveDate: null,
+            usdEstimate: null, usdEstimateDate: null, usdEstimateSource: null,
+            thresholdNotes: "Set by Disposición DNM 1732/2023 (mod. 3446/2023). Store localAmount + effectiveDate when confirmed; no hard-coded USD."
+          },
+          notes: null
+        },
+        {
+          routeName: "Residencia temporaria como trabajador migrante (Art. 23 a)",
+          servesIncomeTypes: [],   /* employer-sponsored LOCAL work (relación de dependencia) only */
+          officialServesDescription: "Verified for employer-sponsored LOCAL work (relación de dependencia) only.",
+          verification: {
+            status: "official_source_confirmed",
+            governmentAuthority: "Dirección Nacional de Migraciones (DNM)",
+            legalInstrument: "Ley 25.871 Art. 23(a) + Decreto 616/2010",
+            sourceTitle: "Obtener una residencia temporaria como trabajador migrante",
+            sourceUrl: "https://www.argentina.gob.ar/servicio/obtener-una-residencia-temporaria-como-trabajador-migrante",
+            lastChecked: "2026-07-03",
+            reviewedBy: "deep-research cross-check 2026-07-03",
+            confidence: "high",
+            uncertaintyNotes: "Local employer-sponsored work only. Do NOT use this to claim Argentina rejects remote workers generally.",
+            professionalVerificationRecommended: true
+          },
+          permanence: {
+            pathType: "eligible_to_apply", eligibleToApply: true,
+            standardEligibilityMonths: 36, possibleReducedEligibilityMonths: null,
+            reductionIsDiscretionary: false, approvalGuaranteed: false,
+            presenceRequirements: "Must be physically present >50% of the granted residence period; no absence ≥6 consecutive months.",
+            absenceCancellationRules: "Informational: DNU 366/2025 — see above. Must NOT generate an elimination.",
+            notes: null
+          },
+          threshold: {
+            thresholdType: "unverified",
+            localAmount: null, localCurrency: null, calculationBasis: null, effectiveDate: null,
+            usdEstimate: null, usdEstimateDate: null, usdEstimateSource: null,
+            thresholdNotes: "Employer-sponsored; income threshold not separately verified here."
+          },
+          notes: null
+        },
+        {
+          routeName: "Reunificación familiar (dependent mechanism)",
+          servesIncomeTypes: [],
+          officialServesDescription: "Family reunification — dependent mechanism, not an income route.",
+          verification: {
+            status: "official_source_confirmed",
+            governmentAuthority: "Dirección Nacional de Migraciones (DNM)",
+            legalInstrument: "Ley 25.871 + Decreto 616/2010",
+            sourceTitle: "Reunificación familiar",
+            sourceUrl: "https://www.argentina.gob.ar/servicio/radicaciones-residencia-permanente",
+            lastChecked: "2026-07-03",
+            reviewedBy: "deep-research cross-check 2026-07-03",
+            confidence: "high",
+            uncertaintyNotes: "Dependent mechanism; not an income-qualifying route.",
+            professionalVerificationRecommended: true
+          },
+          permanence: {
+            pathType: "eligible_to_apply", eligibleToApply: true,
+            standardEligibilityMonths: 36, possibleReducedEligibilityMonths: null,
+            reductionIsDiscretionary: false, approvalGuaranteed: false,
+            presenceRequirements: "Must be physically present >50% of the granted residence period; no absence ≥6 consecutive months.",
+            absenceCancellationRules: "Informational: DNU 366/2025 — see above.",
+            notes: null
+          },
+          threshold: {
+            thresholdType: "case_by_case_solvency",
+            localAmount: null, localCurrency: null, calculationBasis: "Dependent — no independent income threshold.", effectiveDate: null,
+            usdEstimate: null, usdEstimateDate: null, usdEstimateSource: null,
+            thresholdNotes: null
+          },
+          notes: null
+        }
+      ],
+      absenceOfEvidence: [
+        {
+          routeName: "Dedicated remote-employment route",
+          status: "not_verified", routeLocated: false,
+          note: "Not located. Absence of evidence, not proof of absence — no elimination."
+        },
+        {
+          routeName: "Stand-alone self-employed route",
+          status: "not_verified", routeLocated: false,
+          note: "Not located. Absence of evidence, not proof of absence — no elimination."
+        }
+      ],
+      verification: {
+        status: "needs_review",
+        routeName: null,
+        claim: "Rentista/pensionado/trabajador routes + permanence confirmed; remote and self-employed routes unresolved.",
+        governmentAuthority: "Dirección Nacional de Migraciones (DNM)",
+        sourceTitle: null, sourceUrl: null, legalInstrument: null,
+        lastChecked: null, reviewedBy: null,
+        reviewNotes: "Country stays hidden until routes are wired and reviewed. DNU 366/2025 is informational only.",
+        confidence: "medium", professionalVerificationRecommended: true
+      },
+      survivorNotes: [
+        { default: true, tags: [], line: "Research record — Argentina rentista/pensionado/trabajador routes staged; remote/self-employed not located. Hidden from visitors." }
+      ]
+    },
+
+    {
+      id: "paraguay",
+      name: "Paraguay",
+      research: true,
+      coverage: "research",
+      eliminations: [],
+      governingLaw: "Ley N° 6984/2022",
+      authority: "Dirección Nacional de Migraciones",
+      routes: [
+        {
+          routeName: "Residencia permanente para el cambio de categoría (temporal → permanente)",
+          servesIncomeTypes: [],
+          officialServesDescription: "Permanent change-of-category step (from temporary resident). Confirmed for the PERMANENT step only.",
+          verification: {
+            status: "official_source_confirmed",
+            governmentAuthority: "Dirección Nacional de Migraciones",
+            legalInstrument: "Ley N° 6984/2022",
+            sourceTitle: "Residencia permanente para el cambio de categoría de residente temporal",
+            sourceUrl: "https://migraciones.gov.py/residencia-permanente-para-el-cambio-de-categoria-de-residente-temporal/",
+            lastChecked: "2026-07-03",
+            reviewedBy: "deep-research cross-check 2026-07-03",
+            confidence: "high",
+            uncertaintyNotes: "Permanent step confirmed; the qualifying non-MERCOSUR TEMPORARY entry pathway is needs_review.",
+            professionalVerificationRecommended: true
+          },
+          permanence: {
+            pathType: "eligible_to_apply", eligibleToApply: true,
+            standardEligibilityMonths: null, possibleReducedEligibilityMonths: null,
+            reductionIsDiscretionary: false, approvalGuaranteed: false,
+            presenceRequirements: null, absenceCancellationRules: null,
+            notes: "Confirmed for the permanent change-of-category step only."
+          },
+          threshold: {
+            thresholdType: "unverified",
+            localAmount: null, localCurrency: null, calculationBasis: null, effectiveDate: null,
+            usdEstimate: null, usdEstimateDate: null, usdEstimateSource: null,
+            thresholdNotes: "Temporary-entry thresholds not verified."
+          },
+          notes: null
+        },
+        {
+          routeName: "Residencia permanente para inversionistas (SUACE)",
+          servesIncomeTypes: ["savings", "self_employed"],
+          officialServesDescription: "Investor permanent route via SUACE. Confirmed that the route EXISTS; minimum investment amount unverified.",
+          verification: {
+            status: "official_source_confirmed",
+            governmentAuthority: "Dirección Nacional de Migraciones / SUACE",
+            legalInstrument: "Ley N° 6984/2022",
+            sourceTitle: "Residencia permanente para inversionistas extranjeros (SUACE)",
+            sourceUrl: "https://migraciones.gov.py/residencia-permanente-para-inversionistas-extranjeros-suace/",
+            lastChecked: "2026-07-03",
+            reviewedBy: "deep-research cross-check 2026-07-03",
+            confidence: "medium",
+            uncertaintyNotes: "Route existence confirmed; minimum investment amount is NOT verified.",
+            professionalVerificationRecommended: true
+          },
+          permanence: {
+            pathType: "eligible_to_apply", eligibleToApply: true,
+            standardEligibilityMonths: null, possibleReducedEligibilityMonths: null,
+            reductionIsDiscretionary: false, approvalGuaranteed: false,
+            presenceRequirements: null, absenceCancellationRules: null,
+            notes: "Investor permanent route via SUACE."
+          },
+          threshold: {
+            thresholdType: "unverified",
+            localAmount: null, localCurrency: null, calculationBasis: null, effectiveDate: null,
+            usdEstimate: null, usdEstimateDate: null, usdEstimateSource: null,
+            thresholdNotes: "Minimum investment amount unverified — do not populate."
+          },
+          notes: null
+        },
+        {
+          routeName: "Qualifying non-MERCOSUR temporary pathway (US applicant)",
+          servesIncomeTypes: [],
+          officialServesDescription: "Temporary entry pathway, income-type mapping, and numeric thresholds — all unresolved.",
+          verification: {
+            status: "needs_review",
+            governmentAuthority: "Dirección Nacional de Migraciones",
+            legalInstrument: null, sourceTitle: null, sourceUrl: null,
+            lastChecked: null, reviewedBy: null,
+            confidence: "low",
+            uncertaintyNotes: "Temporary pathway + income mapping + thresholds all need primary-source research. Paraguay must NOT issue public hard eliminations from incomplete route mapping.",
+            professionalVerificationRecommended: true
+          },
+          permanence: {
+            pathType: "uncertain", eligibleToApply: null,
+            standardEligibilityMonths: null, possibleReducedEligibilityMonths: null,
+            reductionIsDiscretionary: false, approvalGuaranteed: false,
+            presenceRequirements: null, absenceCancellationRules: null, notes: null
+          },
+          threshold: {
+            thresholdType: "unverified",
+            localAmount: null, localCurrency: null, calculationBasis: null, effectiveDate: null,
+            usdEstimate: null, usdEstimateDate: null, usdEstimateSource: null, thresholdNotes: null
+          },
+          notes: null
+        }
+      ],
+      absenceOfEvidence: [],
+      verification: {
+        status: "needs_review",
+        routeName: null,
+        claim: "Two permanent routes confirmed; temporary entry pathway and thresholds unresolved.",
+        governmentAuthority: "Dirección Nacional de Migraciones",
+        sourceTitle: null, sourceUrl: null, legalInstrument: null,
+        lastChecked: null, reviewedBy: null,
+        reviewNotes: "Coverage research-grade — the entry pathway is needs_review, so not production-usable.",
+        confidence: "low", professionalVerificationRecommended: true
+      },
+      survivorNotes: [
+        { default: true, tags: [], line: "Research record — Paraguay permanent routes staged; temporary pathway needs research. Hidden from visitors." }
+      ]
+    },
+
+    {
+      id: "peru",
+      name: "Peru",
+      research: true,
+      coverage: "research",
+      eliminations: [],
+      governingLaw: null,
+      authority: null,
+      routes: [],
+      absenceOfEvidence: [],
+      verification: {
+        status: "needs_review",
+        routeName: null,
+        claim: "Skeleton — no verified routes yet.",
+        governmentAuthority: null, sourceTitle: null, sourceUrl: null, legalInstrument: null,
+        lastChecked: null, reviewedBy: null,
+        reviewNotes: "Awaiting primary-source research. No invented sources or thresholds.",
+        confidence: "low", professionalVerificationRecommended: true
+      },
+      survivorNotes: [
+        { default: true, tags: [], line: "Research record — Peru skeleton, no verified routes. Hidden from visitors." }
+      ]
+    },
+
+    {
+      id: "brazil",
+      name: "Brazil",
+      research: true,
+      coverage: "research",
+      eliminations: [],
+      governingLaw: null,
+      authority: null,
+      routes: [],
+      absenceOfEvidence: [],
+      verification: {
+        status: "needs_review",
+        routeName: null,
+        claim: "Skeleton — no verified routes yet.",
+        governmentAuthority: null, sourceTitle: null, sourceUrl: null, legalInstrument: null,
+        lastChecked: null, reviewedBy: null,
+        reviewNotes: "Awaiting primary-source research. No invented sources or thresholds.",
+        confidence: "low", professionalVerificationRecommended: true
+      },
+      survivorNotes: [
+        { default: true, tags: [], line: "Research record — Brazil skeleton, no verified routes. Hidden from visitors." }
       ]
     }
   ],
@@ -327,3 +913,8 @@ window.FIT_RULES = {
     shareText: "Which Latin American countries survive YOUR non-negotiables?"
   }
 };
+
+/* Expose for the browser (window.FIT_RULES) and Node (require) alike, so the
+   same data drives the live tool and the validator. */
+(typeof window !== "undefined" ? window : globalThis).FIT_RULES = FIT_RULES;
+if (typeof module !== "undefined" && module.exports) module.exports = FIT_RULES;

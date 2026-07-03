@@ -10,7 +10,67 @@ Plain HTML/CSS/JS — no build step, no dependencies, no backend.
 | `rules.js` | **All countries, elimination rules, thresholds, tags, copy, links, official-source URLs.** | **Yes — this is the only file you should need to touch.** |
 | `index.html` | Page shell + meta/OG tags. | Only for `<head>` meta/OG changes. |
 | `styles.css` | §14 design layer (dark editorial, mobile-first). | Only for visual changes. |
-| `app.js` | Verdict engine, rendering, share card, analytics, self-test. | No copy lives here. |
+| `engine.js` | **Shared safety/verdict engine** (browser + validator). Holds the hard-elimination evidence gate. | Rarely — logic only. |
+| `app.js` | Rendering, share card, analytics, self-test. Delegates verdicts to `engine.js`. | No copy lives here. |
+| `tests/validate.mjs` | Node validator — safety invariants + machine-readable report. | When adding invariants. |
+| `package.json` | `npm test` → runs the validator. | No. |
+
+## Verification, safety gate & research countries
+
+**Every claim carries a `verification` block** (`status`, `routeName`, `claim`,
+`governmentAuthority`, `sourceTitle`, `sourceUrl`, `legalInstrument`, `lastChecked`,
+`reviewedBy`, `reviewNotes`, `confidence`, `professionalVerificationRecommended`).
+
+**A country can be hard-eliminated ONLY when its elimination clears the evidence
+gate** in `engine.js`: `status` is `official_source_confirmed` or `attorney_reviewed`
+**and** it has `routeName`, `governmentAuthority`, `sourceUrl`, `legalInstrument`, and a
+non-stale `lastChecked`. Anything less **survives** — an unverified claim can never rule
+a country out. `status` of `needs_review` or `expired` must **not** carry a `lastChecked`
+date (the validator fails the build if it does).
+
+- **Statuses:** `official_source_confirmed` · `attorney_reviewed` · `needs_review` · `expired`.
+- **Cost, safety, healthcare, altitude, language, politics, bureaucracy, lifestyle** stay
+  warnings/context (tags), **never** hard eliminations.
+- **Research countries** carry `research: true` and are hidden from production by
+  `settings.includeResearchCountries: false`. They appear **only in dev/preview mode**
+  (localhost, or `?preview=1` / `?dev=1`), clearly labelled "Research — not verified,"
+  excluded from the survivor count, and never given a verdict.
+- Country-level `coverage` (`live`/`partial`/`research`) is **derived** from claims and
+  **never** overrides an individual claim's status.
+
+**Run the validator:** `npm test` (or `node tests/validate.mjs`). Exit 0 = pass, 1 = fail.
+It writes `tests/validation-report.json` (machine-readable: every incomplete country and
+claim). The browser also runs the same-spirit `selfTest()` on load (`[ff] self-test PASS`).
+
+### Route staging schema (research countries)
+
+Research countries stage their claims in a `routes[]` array (they keep `eliminations: []`
+so they can never rule anyone out until a route is converted). Each route carries:
+
+- `routeName`, `servesIncomeTypes[]`, `officialServesDescription` (guards against mis-mapping,
+  e.g. a *local*-work route must not be tagged as foreign remote employment).
+- `verification { … }` — same claim-level block as eliminations.
+- **`permanence { pathType, eligibleToApply, standardEligibilityMonths,
+  possibleReducedEligibilityMonths, reductionIsDiscretionary, approvalGuaranteed: false,
+  presenceRequirements, absenceCancellationRules, notes }`.** `pathType` is one of
+  `direct_permanent | eligible_to_apply | no_verified_pathway | uncertain`. The validator
+  fails if an `eligible_to_apply` route sets `approvalGuaranteed` anything but `false`, or if
+  a reduced timeline is present without `reductionIsDiscretionary: true` — so **"eligible to
+  apply" can never render as guaranteed, and a discretionary reduction can never render as
+  automatic**.
+- **`threshold { thresholdType, localAmount, localCurrency, calculationBasis, effectiveDate,
+  usdEstimate, usdEstimateDate, usdEstimateSource, thresholdNotes }`.** `thresholdType` is
+  `fixed_amount | minimum_wage_multiple | case_by_case_solvency | unverified`. Third-party
+  dollar figures go **only** in `usdEstimate` (with a source); the validator fails if a
+  `case_by_case_solvency`/`unverified` route carries a legal `localAmount`, or if a `usdEstimate`
+  is reused as the legal threshold.
+- `absenceOfEvidence[]` (country level) records a route that could **not** be located
+  (`routeLocated: false`). This is "absence of evidence," never "proof no route exists," and
+  can never drive an elimination.
+
+`coverage` (`live | partial | research`) may be stored per country but is validated against
+the derived value — it may be **equal or more conservative**, never more optimistic, and a
+hidden country can never be `live`.
 
 ## Editing rules & copy
 
@@ -31,12 +91,14 @@ Open `rules.js`. Everything is commented. Key points:
 
 The engine, tile grid, survivor count, result templates, and share card all read
 the country list dynamically — adding a country is a `rules.js` edit, no code
-changes. Paste this into the `countries` array and fill it in:
+changes. **New countries start as research records** (hidden from production); an
+elimination only goes live once its `verification` clears the gate.
 
 ```js
 {
   id: "peru",                     /* lowercase snake_case, unique */
   name: "Peru",
+  research: true,                 /* true = hidden from production; flip to false only when confirmed */
   /* Eliminations fire ONLY on documented legal route conflicts (PRD §4) —
      never affordability. Leave the array empty if it never eliminates. */
   eliminations: [
@@ -46,28 +108,34 @@ changes. Paste this into the `countries` array and fill it in:
       reason: "Full factual sentence shown on the eliminated tile.",
       why: "short clause for the surprise line — “…hard-failed your X — {why}.”",
       cardHeadline: "Peru ruled out for my permanent move — <one-line documented fact>.",
-      source: { label: "Official source name", url: "https://…" }
+      source: { label: "Official source name", url: "https://…" },
+      /* REQUIRED for the elimination to ever fire. While researching, keep
+         status "needs_review" and OMIT lastChecked — it cannot eliminate
+         until confirmed, which is the safety design. */
+      verification: {
+        status: "needs_review",   /* → official_source_confirmed | attorney_reviewed when verified */
+        routeName: "…", claim: "…", governmentAuthority: "…",
+        sourceTitle: "…", sourceUrl: "https://…", legalInstrument: "…",
+        lastChecked: null,        /* ONLY set (YYYY-MM-DD) when status is confirmed/attorney_reviewed */
+        reviewedBy: null, reviewNotes: "…", confidence: "low",
+        professionalVerificationRecommended: true
+      }
     }
   ],
+  /* Optional candidate sources kept separate while unverified — never invent these. */
+  candidateResearch: [],
   source: { label: "Official source for the survivor line", url: "https://…" },
-  /* First entry whose `when` matches wins; `default: true` is the fallback.
-     Order matters. Tags must exist in the `tags` map above. */
   survivorNotes: [
-    {
-      when: { income: ["pension"] },
-      tags: [],
-      line: "Route note for this answer combination."
-    },
-    {
-      default: true,
-      tags: [],
-      line: "No hard route conflict on these answers — verify the route matching your income type."
-    }
+    { default: true, tags: [], line: "Research record — verify the route matching your income type." }
   ]
 }
 ```
 
-**Checklist — the four spots that don't update themselves:**
+**Going live:** set the elimination's `verification.status` to `official_source_confirmed`
+(or `attorney_reviewed`), fill every required field, set a current `lastChecked`, then flip
+`research: false`. Run `npm test` — it fails if anything is inconsistent.
+
+**Checklist — the spots that don't update themselves:**
 
 1. **Surprise priority** — if the country can eliminate, add its `id` to
    `surprise.eliminationPriority` in `rules.js` (position = how surprising its

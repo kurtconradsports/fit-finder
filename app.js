@@ -7,7 +7,23 @@
   "use strict";
 
   var R = window.FIT_RULES;
+  var E = window.FitEngine; /* shared safety/verdict engine */
   var $ = function (id) { return document.getElementById(id); };
+
+  /* Dev/preview mode: localhost or ?preview=1 / ?dev=1. Only here do research
+     records appear — clearly labelled and blocked from authoritative verdicts.
+     Production (the live URL) stays research-free. */
+  var devMode = (function () {
+    try {
+      var qs = new URLSearchParams(location.search);
+      if (qs.get("preview") === "1" || qs.get("dev") === "1") return true;
+      return /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
+    } catch (e) { return false; }
+  })();
+  /* Research records surface ONLY in dev mode (labelled, verdict-blocked).
+     rules.settings.includeResearchCountries is the production default (false);
+     dev mode reveals them. Production stays research-free. */
+  var includeResearch = devMode || !!(R.settings && R.settings.includeResearchCountries);
 
   /* ---------------- analytics (§8) ---------------- */
 
@@ -44,57 +60,21 @@
   }
 
   /* ---------------- verdict engine (§4) ----------------
-     Strictly two states: ELIMINATED_HARD_CONFLICT | SURVIVES_WITH_CONTEXT.
-     Nuance lives only in non-verdict tags. */
+     The logic now lives in engine.js (shared with the validator) so the
+     hard-elimination safety gate cannot drift. evaluateAll passes the dev
+     flag through so research records only appear in dev mode. */
 
-  function matches(when, a) {
-    return Object.keys(when).every(function (k) {
-      return when[k].indexOf(a[k]) !== -1;
+  function evaluateAll(a) {
+    return E.evaluateAll(R.countries, a, {
+      includeResearchCountries: includeResearch
     });
   }
 
-  function evaluateCountry(country, a) {
-    var elims = country.eliminations || [];
-    for (var i = 0; i < elims.length; i++) {
-      if (matches(elims[i].when, a)) {
-        return {
-          id: country.id,
-          name: country.name,
-          verdict: "ELIMINATED_HARD_CONFLICT",
-          elimination: elims[i],
-          line: elims[i].reason,
-          tags: [],
-          source: elims[i].source || country.source || null
-        };
-      }
-    }
-    var notes = country.survivorNotes || [];
-    var note = null;
-    for (var j = 0; j < notes.length; j++) {
-      if (notes[j].when && matches(notes[j].when, a)) { note = notes[j]; break; }
-    }
-    if (!note) {
-      note = notes.filter(function (n) { return n.default; })[0] || { line: "", tags: [] };
-    }
-    return {
-      id: country.id,
-      name: country.name,
-      verdict: "SURVIVES_WITH_CONTEXT",
-      elimination: null,
-      line: note.line,
-      tags: note.tags || [],
-      source: country.source || null
-    };
-  }
-
-  function evaluateAll(a) {
-    return R.countries.map(function (c) { return evaluateCountry(c, a); });
-  }
-
-  /* Surprise-elimination selector (§4). */
+  /* Surprise-elimination selector (§4). Research records never supply the
+     surprise (they are excluded from authoritative verdicts). */
   function pickSurprise(results) {
     var byId = {};
-    results.forEach(function (r) { byId[r.id] = r; });
+    results.forEach(function (r) { if (!r.research) byId[r.id] = r; });
     for (var i = 0; i < R.surprise.eliminationPriority.length; i++) {
       var r = byId[R.surprise.eliminationPriority[i]];
       if (r && r.verdict === "ELIMINATED_HARD_CONFLICT") {
@@ -102,7 +82,7 @@
       }
     }
     /* nothing eliminated → strongest context flag */
-    var survivors = results.filter(function (r) { return r.verdict === "SURVIVES_WITH_CONTEXT"; });
+    var survivors = results.filter(function (r) { return r.verdict === "SURVIVES_WITH_CONTEXT" && !r.research; });
     for (var t = 0; t < R.surprise.contextPriority.length; t++) {
       var tag = R.surprise.contextPriority[t];
       for (var s = 0; s < survivors.length; s++) {
@@ -218,13 +198,24 @@
     wrap.textContent = "";
     results.forEach(function (r) {
       var eliminated = r.verdict === "ELIMINATED_HARD_CONFLICT";
-      var tile = el("article", "tile " + (eliminated ? "eliminated" : "survivor"));
+      var cls = "tile " + (r.research ? "research" : (eliminated ? "eliminated" : "survivor"));
+      var tile = el("article", cls);
       tile.dataset.country = r.id;
 
       var head = el("div", "tile-head");
       head.appendChild(el("h3", "tile-name", r.name));
-      head.appendChild(el("span", "tile-status", eliminated ? R.copy.statusEliminated : R.copy.statusSurvives));
+      /* Research records get a neutral, non-authoritative label — never a
+         "survives"/"ruled out" verdict (dev-only). */
+      var statusText = r.research
+        ? "Research — not verified"
+        : (eliminated ? R.copy.statusEliminated : R.copy.statusSurvives);
+      head.appendChild(el("span", "tile-status", statusText));
       tile.appendChild(head);
+
+      if (r.research) {
+        tile.appendChild(el("p", "tile-research-note",
+          "Preview only. This country is still in research and is not shown to visitors or given a verdict."));
+      }
 
       if (eliminated && r.elimination && r.elimination.nonNegotiable) {
         tile.appendChild(el("p", "tile-conflict", R.copy.conflictPrefix + " " + r.elimination.nonNegotiable + "."));
@@ -262,7 +253,11 @@
     var newCombo = !seenResultCombos[comboKey];
     seenResultCombos[comboKey] = true;
 
-    var survivors = results.filter(function (r) { return r.verdict === "SURVIVES_WITH_CONTEXT"; });
+    /* Authoritative verdict counts CONFIRMED countries only — research
+       records never inflate the survivor list. */
+    var survivors = results.filter(function (r) {
+      return r.verdict === "SURVIVES_WITH_CONTEXT" && !r.research;
+    });
     var names = survivors.map(function (r) { return r.name; });
     var listText = names.length > 1
       ? names.slice(0, -1).join(", ") + " and " + names[names.length - 1]
@@ -505,7 +500,10 @@
 
     /* canonical “Michael”: permanent · remote · $3–4.5k · couple */
     var michael = { residency: "permanent", income: "remote", budget: "b3k_4500", household: "couple" };
-    var rm = evaluateAll(michael);
+    /* Behaviour checks run against PRODUCTION scope (research countries
+       excluded) so dev-mode staging can never mask a regression. */
+    function prodEval(a) { return E.evaluateAll(R.countries, a, { includeResearchCountries: false }); }
+    var rm = prodEval(michael);
     ["colombia", "costa_rica", "panama"].forEach(function (id) {
       check("Michael: " + id + " eliminated", verdictOf(rm, id) === "ELIMINATED_HARD_CONFLICT");
     });
@@ -519,14 +517,14 @@
 
     /* reshuffle: retiree — permanent · pension · $3–4.5k · couple */
     var retiree = { residency: "permanent", income: "pension", budget: "b3k_4500", household: "couple" };
-    var rr = evaluateAll(retiree);
+    var rr = prodEval(retiree);
     ["colombia", "costa_rica", "panama", "mexico", "ecuador", "uruguay"].forEach(function (id) {
       check("Retiree: " + id + " survives", verdictOf(rr, id) === "SURVIVES_WITH_CONTEXT");
     });
 
     /* Uruguay budget_pressure fires per the §4 table */
     var pressured = { residency: "several_years", income: "remote", budget: "b2k_3k", household: "family" };
-    var rp = evaluateAll(pressured);
+    var rp = prodEval(pressured);
     var uy = rp.filter(function (r) { return r.id === "uruguay"; })[0];
     check("Uruguay: budget_pressure at $2–3k family", uy.tags.indexOf("budget_pressure") !== -1);
 
@@ -537,7 +535,7 @@
       R.questions[1].options.forEach(function (o2) {
         R.questions[2].options.forEach(function (o3) {
           R.questions[3].options.forEach(function (o4) {
-            var rs = evaluateAll({ residency: o1.value, income: o2.value, budget: o3.value, household: o4.value });
+            var rs = prodEval({ residency: o1.value, income: o2.value, budget: o3.value, household: o4.value });
             rs.forEach(function (r) {
               if (r.verdict !== "ELIMINATED_HARD_CONFLICT" && r.verdict !== "SURVIVES_WITH_CONTEXT") onlyTwoStates = false;
               if (r.verdict === "ELIMINATED_HARD_CONFLICT") {
@@ -552,6 +550,22 @@
     check("All 240 combos: Mexico/Ecuador/Uruguay never eliminate", neverEliminated);
     check("All 240 combos: every elimination has reason + source", allDocumented);
     check("All 240 combos: strictly two verdict states", onlyTwoStates);
+
+    /* Safety gate: every elimination that CAN fire is enforceable (clears
+       the evidence threshold). If any confirmed elimination silently stopped
+       firing, Michael above would already have failed. */
+    var allEnforceable = true;
+    R.countries.forEach(function (c) {
+      (c.eliminations || []).forEach(function (e) {
+        if (!E.eliminationIsEnforceable(e).ok) allEnforceable = false;
+      });
+    });
+    check("Every defined elimination is enforceable (meets evidence threshold)", allEnforceable);
+
+    /* Production must never expose a research record. */
+    var prod = E.evaluateAll(R.countries, michael, { includeResearchCountries: false });
+    check("Production results contain no research records",
+      prod.every(function (r) { return !r.research; }));
 
     var pass = checks.every(function (c) { return c.pass; });
     if (pass) {
