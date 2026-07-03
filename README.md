@@ -90,15 +90,39 @@ rather than required for the country to work.
 
 ## Deploying
 
-Any static host. Drag the `fit-finder/` folder into Netlify Drop, Cloudflare Pages,
-or push to GitHub Pages. It also works opened directly as a file (`index.html`).
+**Live now (since 2026-07-03):** https://kurtconradsports.github.io/fit-finder/
+served by GitHub Pages from the public repo
+https://github.com/kurtconradsports/fit-finder (branch `main`, root).
+
+This folder (inside expat-escape-ops) is the working copy. To ship an update:
+copy the five files into a clone of the public repo, commit, push — Pages
+redeploys automatically in ~1 minute:
+
+```bash
+git clone https://github.com/kurtconradsports/fit-finder /tmp/ff && \
+cp index.html styles.css app.js rules.js README.md /tmp/ff/ && \
+cd /tmp/ff && git commit -am "update" && git push
+```
+
+It would also work on any other static host (Netlify, Cloudflare Pages) or
+opened directly as a file (`index.html`).
 
 ## Analytics
 
-All §8 events fire through one `track()` function in `app.js`. It automatically
-forwards to **Plausible**, **gtag**, or **GTM dataLayer** if their snippet is present
-on the page — add your provider's `<script>` tag to `index.html` and events flow with
-zero code changes. Events also accumulate in `window.__ffEvents` for debugging.
+**Live dashboard: https://expatescape.goatcounter.com** — log in as
+kurtconradsports@gmail.com (password in expat-escape-ops `config/secrets.env`,
+`GOATCOUNTER_PASSWORD`; change it after first login). Pageviews are counted
+automatically; the §8 events appear under the "events" filter as paths
+(`finder_start`, `result_reached`, `surprise_elimination_shown/colombia`, …).
+Caveats: adblockers block GoatCounter (undercounts, like every client-side
+tool), localhost hits are ignored (safe for dev), and `page_view` is covered
+by GoatCounter's automatic pageview rather than the custom event.
+
+All §8 events fire through one `track()` function in `app.js`. Besides
+GoatCounter it also forwards to **Plausible**, **gtag**, or **GTM dataLayer**
+if their snippet is present on the page — add a provider's `<script>` tag to
+`index.html` and events flow with zero code changes. Events also accumulate
+in `window.__ffEvents` for debugging.
 
 Events: `page_view`, `finder_start`, `q1_answered`–`q4_answered`, `result_reached`,
 `surprise_elimination_shown`, `share_clicked`, `cta_clicked`, `worksheet_clicked`,
@@ -118,10 +142,14 @@ It verifies:
 
 ## ⚠ Before public launch
 
-1. **Verify the official-source URLs and route classifications in `rules.js`**
-   (PRD §4 footnote — these are the load-bearing cells).
-2. Set `links.audit` and `links.worksheet` in `rules.js` (worksheet link stays hidden
-   while it starts with `#`).
+1. ✅ **Done 2026-07-03** — the three eliminating rules (Colombia, Costa Rica,
+   Panama) carry verified legal-instrument sources with `lastVerified` dates.
+   Mexico/Ecuador remain best-effort (they never eliminate).
+2. ✅ **Done 2026-07-03** — `links.audit` (live Fit Audit page), `links.calendly`,
+   and `links.worksheet` (live Shortlist landing page with `utm_source=fit_finder`)
+   all set and tested. The worksheet funnel captures email via the site's
+   lead-magnet plugin → Mailchimp (audience "The Expat Escape Plan Subscribers",
+   tag `lead-magnet-shortlist`) → worksheet emailed immediately by the site.
 3. ~~Known PRD discrepancy~~ **Resolved 2026-07-03:** the §4 table (tag stops at
    $2–3k) and the §4 "Michael" sanity line ($3–4.5k couple carries it) disagreed;
    Kurt ruled the sanity line wins. Uruguay's `budget_pressure` fires up to

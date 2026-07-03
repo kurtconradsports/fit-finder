@@ -16,6 +16,12 @@
     props = props || {};
     events.push({ name: name, props: props, t: Date.now() });
     try {
+      if (window.goatcounter && window.goatcounter.count) {
+        /* GoatCounter: events show as event paths on the dashboard; the
+           surprise country gets its own sub-path for per-country counts. */
+        var path = name + (props.country ? "/" + props.country : "");
+        window.goatcounter.count({ path: path, title: name, event: true });
+      }
       if (window.plausible) window.plausible(name, { props: props });
       if (window.gtag) window.gtag("event", name, props);
       if (window.dataLayer) window.dataLayer.push(Object.assign({ event: name }, props));

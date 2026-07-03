@@ -16,8 +16,13 @@
      with "default: true" is the fallback. Order matters.
    - Tags are non-verdict context. They explain; they never rank.
 
-   ⚠ VERIFY BEFORE PUBLIC LAUNCH (PRD §4 footnote): the source URLs and
-   route classifications below are from the July-3 2026 cross-check.
+   SOURCE VERIFICATION STATUS
+   - Colombia / Costa Rica / Panama (the three eliminating rules): verified
+     2026-07-03 against the named legal instruments (`lastVerified` on each
+     source). The legal instrument name is the permanent fallback reference;
+     the URL is the official portal.
+   - Mexico / Ecuador (never eliminate): source refs still best-effort from
+     the July-3 cross-check — re-verify if their lines start doing more work.
    If a route reclassifies, the tool's core claim changes with it.
    ===================================================================== */
 
@@ -46,16 +51,20 @@ window.FIT_RULES = {
     ctaPromise: "The free result shows which countries survive. The Fit Audit narrows your survivors to the strongest two, names the specific cities to investigate in each, checks the residency math against your actual numbers, and flags what to verify — as a private walkthrough built for your situation. $99.",
     shareButton: "Share my result",
     shareFallbackToast: "Card downloaded · link copied",
-    worksheetLink: "Get the free framework worksheet",
+    worksheetLink: "Get the free Shortlist Worksheet — emailed to you",
     recruitLine: "Building this with real movers. Got 15 minutes to tell me what’s missing?",
     recruitLinkText: "Grab a slot"
   },
 
   links: {
-    /* EDIT THESE before launch */
+    /* All three verified live 2026-07-03. */
     audit: "https://theexpatescapeplan.com/latin-america-fit-audit/",
     calendly: "https://calendly.com/kurtconrad/15min",
-    worksheet: "#WORKSHEET-URL"  /* placeholder — set or leave; link hides itself while it starts with # */
+    /* Live Shortlist Worksheet funnel: captures email via the site's
+       expat-escape-lead-magnet plugin → Mailchimp (tag lead-magnet-shortlist,
+       UTMs recorded in LMSOURCE/LMMEDIUM/LMCAMP) → worksheet emailed
+       immediately by the site. End-to-end tested 2026-07-03. */
+    worksheet: "https://theexpatescapeplan.com/latin-america-shortlist/?utm_source=fit_finder&utm_medium=referral&utm_campaign=finder_worksheet"
   },
 
   questions: [
@@ -139,14 +148,16 @@ window.FIT_RULES = {
           why: "its remote-worker category is classified No Residente / Estancia — a non-resident stay, not a route to permanence",
           cardHeadline: "Costa Rica ruled out for my permanent move — the remote-worker category is a non-resident stay.",
           source: {
-            label: "PGR / Migración Costa Rica — Estancia (No Residente) classification",
-            url: "https://www.migracion.go.cr/"
+            label: "Ley 10008 — Estancia para Trabajadores Remotos (DGME)",
+            url: "https://www.migracion.go.cr/",
+            lastVerified: "2026-07-03"
           }
         }
       ],
       source: {
-        label: "PGR / Migración Costa Rica — Estancia (No Residente) classification",
-        url: "https://www.migracion.go.cr/"
+        label: "Ley 10008 — Estancia para Trabajadores Remotos (DGME)",
+        url: "https://www.migracion.go.cr/",
+        lastVerified: "2026-07-03"
       },
       survivorNotes: [
         {
@@ -178,14 +189,16 @@ window.FIT_RULES = {
           why: "its short-stay remote-worker route (up to 9 months, renewable) does not itself provide a path to permanent residence",
           cardHeadline: "Panama ruled out for my permanent move — the remote-worker route is a short stay, not residency.",
           source: {
-            label: "ProPanamá — Visa de Nómadas Digitales",
-            url: "https://propanama.gob.pa/"
+            label: "Decreto Ejecutivo 198 de 2021 — Visa de Corta Estancia para Trabajadores Remotos (SNM)",
+            url: "https://www.migracion.gob.pa/",
+            lastVerified: "2026-07-03"
           }
         }
       ],
       source: {
-        label: "ProPanamá — Visa de Nómadas Digitales",
-        url: "https://propanama.gob.pa/"
+        label: "Decreto Ejecutivo 198 de 2021 — Visa de Corta Estancia para Trabajadores Remotos (SNM)",
+        url: "https://www.migracion.gob.pa/",
+        lastVerified: "2026-07-03"
       },
       survivorNotes: [
         {
@@ -217,14 +230,16 @@ window.FIT_RULES = {
           why: "its digital-nomad visa is a Visitor (V) visa that grants no residency status",
           cardHeadline: "Colombia ruled out for my permanent move — the digital-nomad visa grants no residency status.",
           source: {
-            label: "Cancillería — Resolución 5477/2022 (Visa V)",
-            url: "https://www.cancilleria.gov.co/tramites_servicios/visa"
+            label: "Resolución 5477 de 2022 (Cancillería) — Visa V Nómadas Digitales",
+            url: "https://visa.cancilleria.gov.co/",
+            lastVerified: "2026-07-03"
           }
         }
       ],
       source: {
-        label: "Cancillería — Resolución 5477/2022 (Visa V)",
-        url: "https://www.cancilleria.gov.co/tramites_servicios/visa"
+        label: "Resolución 5477 de 2022 (Cancillería) — Visa V Nómadas Digitales",
+        url: "https://visa.cancilleria.gov.co/",
+        lastVerified: "2026-07-03"
       },
       survivorNotes: [
         {
