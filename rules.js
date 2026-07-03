@@ -54,13 +54,18 @@ var FIT_RULES = {
 
     statusSurvives: "Survives",
     statusEliminated: "Ruled out — route conflict",
+    statusResearch: "Research / Partial",
     conflictPrefix: "Conflicts with your",
+    /* Shown on public Research/Partial tiles (Peru, Paraguay). */
+    researchNotePublic: "Partial research: some routes are confirmed, but figures are still being verified. Shown for information only — it never rules a country out and isn’t counted as a confirmed result.",
+    /* Shown only in dev/preview for still-hidden research countries (e.g. Brazil). */
+    researchNoteDev: "Preview only. This country is still in research and is not shown to visitors or given a verdict.",
 
     resultHeadlinePlural: "{n} countries survive your non-negotiables: {list}.",
     resultHeadlineSingular: "1 country survives your non-negotiables: {list}.",
     surpriseTemplate: "{country} looked attractive but hard-failed your {nonNegotiable} — {why}.",
     surpriseNoElimination: "Nothing hard-failed your answers — the biggest thing to verify: {country} — {line}",
-    surpriseNoFlags: "Nothing hard-failed your answers — all six remain worth investigating. Verify each route against your own numbers.",
+    surpriseNoFlags: "Nothing hard-failed your answers — every confirmed country remains worth investigating. Verify each route against your own numbers.",
     handoff: "The Finder shows what survives. The Fit Audit narrows these to your strongest two and names the cities.",
 
     ctaButton: "See What This Means for My Actual Move",
@@ -430,11 +435,15 @@ var FIT_RULES = {
     {
       id: "chile",
       name: "Chile",
-      research: true,
-      coverage: "partial",            /* confirmed routes exist, but coverage incomplete (no remote route located) */
+      research: false,                 /* PUBLIC — normal survivor; no elimination rules (never rules out) */
+      coverage: "partial",            /* confirmed routes exist; remote-work route not located */
       eliminations: [],
       governingLaw: "Ley 21.325 (Migración y Extranjería) + Decreto 177/2022 (reglamento)",
       authority: "Servicio Nacional de Migraciones (SERMIG)",
+      source: {
+        label: "SERMIG — Ley 21.325 + Decreto 177/2022",
+        url: "https://serviciomigraciones.cl/residencia-temporal/"
+      },
       routes: [
         {
           routeName: "Extranjeros jubilados y rentistas",
@@ -558,18 +567,31 @@ var FIT_RULES = {
         confidence: "medium", professionalVerificationRecommended: true
       },
       survivorNotes: [
-        { default: true, tags: [], line: "Research record — Chile routes staged (jubilados/rentistas, actividades remuneradas, inversionistas confirmed; remote-work route not located). Hidden from visitors." }
+        { when: { income: ["pension"] }, tags: [],
+          line: "Confirmed jubilados-y-rentistas route accepts pension income; solvency is judged case-by-case (SERMIG publishes no fixed figure). Permanent residency is by application after ~2 years — a 12-month reduction is possible but discretionary, never guaranteed." },
+        { when: { income: ["savings"] }, tags: [],
+          line: "Confirmed investor and rentista routes fit savings/investment (the investor route references a productive-investment figure). Permanent residency is by application after ~2 years; any reduction is discretionary, not automatic." },
+        { when: { income: ["remote"] }, tags: [],
+          line: "The confirmed routes cover pension, investment, and local work. A route matching foreign remote employment wasn’t located in this review — that’s an unverified gap, not a confirmed “no.” Check remote-work options directly." },
+        { when: { income: ["self_employed"] }, tags: [],
+          line: "The confirmed investor route can fit business owners acting as the company’s legal representative; investment and solvency terms apply. Permanent residency is by application after ~2 years (reductions discretionary)." },
+        { default: true, tags: [],
+          line: "Confirmed residence routes for pension, investment, and local work. Permanent residency is by application after ~2 years — a possible 12-month reduction is discretionary, not automatic. Verify the route matching your situation." }
       ]
     },
 
     {
       id: "argentina",
       name: "Argentina",
-      research: true,
+      research: false,                 /* PUBLIC — normal survivor; no elimination rules (never rules out) */
       coverage: "partial",
       eliminations: [],
       governingLaw: "Ley 25.871 + Decreto 616/2010",
       authority: "Dirección Nacional de Migraciones (DNM)",
+      source: {
+        label: "DNM — Ley 25.871 + Decreto 616/2010",
+        url: "https://www.argentina.gob.ar/interior/migraciones"
+      },
       routes: [
         {
           routeName: "Residencia temporaria como rentista (Art. 23 b)",
@@ -727,14 +749,24 @@ var FIT_RULES = {
         confidence: "medium", professionalVerificationRecommended: true
       },
       survivorNotes: [
-        { default: true, tags: [], line: "Research record — Argentina rentista/pensionado/trabajador routes staged; remote/self-employed not located. Hidden from visitors." }
+        { when: { income: ["pension"] }, tags: [],
+          line: "Confirmed pensionado route (Art. 23c) accepts pension/retirement income; the requirement is a multiple of the minimum wage (the peso figure moves and isn’t fixed here). Permanent residency is by application after 3 years’ continuous residence — not automatic." },
+        { when: { income: ["savings"] }, tags: [],
+          line: "Confirmed rentista route (Art. 23b) accepts income from assets/investments — it explicitly excludes personal-work earnings. The requirement is a minimum-wage multiple (peso figure not fixed here). Permanent residency is by application after 3 years." },
+        { when: { income: ["remote"] }, tags: [],
+          line: "Confirmed routes cover pension, investment income, local employment, and family reunification. A dedicated foreign-remote-work route wasn’t located in this review — an unverified gap, not a confirmed “no.” The rentista route requires non-work income; check remote options directly." },
+        { when: { income: ["self_employed"] }, tags: [],
+          line: "A stand-alone self-employed route wasn’t verified in this review — an unverified gap, not a “no.” The rentista route covers investment income but excludes personal-work earnings. Check business options directly." },
+        { default: true, tags: [],
+          line: "Confirmed residence routes for pension and investment income, plus local employment and family reunification. Permanent residency is by application after 3 years (not automatic). Verify the route matching your situation." }
       ]
     },
 
     {
       id: "paraguay",
       name: "Paraguay",
-      research: true,
+      research: true,                  /* stays research → excluded from survivor count & surprise, never eliminates */
+      publicResearch: true,            /* but VISIBLE in production as a labelled Research/Partial tile */
       coverage: "research",
       eliminations: [],
       governingLaw: "Ley N° 6984/2022",
@@ -841,14 +873,16 @@ var FIT_RULES = {
         confidence: "low", professionalVerificationRecommended: true
       },
       survivorNotes: [
-        { default: true, tags: [], line: "Research record — Paraguay permanent routes staged; temporary pathway needs research. Hidden from visitors." }
+        { default: true, tags: [],
+          line: "Confirmed: a temporary-to-permanent change-of-category route and a SUACE foreign-investor permanent route both exist. Still being verified: income-type mapping, the temporary-pathway details, and the SUACE minimum investment. Shown for information — verify directly." }
       ]
     },
 
     {
       id: "peru",
       name: "Peru",
-      research: true,
+      research: true,                  /* stays research → excluded from survivor count & surprise, never eliminates */
+      publicResearch: true,            /* but VISIBLE in production as a labelled Research/Partial tile */
       coverage: "partial",           /* route existence/framework confirmed; amounts & timing needs_review */
       eliminations: [],
       /* Legal framework + authority for all three routes, from the Official
@@ -978,7 +1012,14 @@ var FIT_RULES = {
         confidence: "medium", professionalVerificationRecommended: true
       },
       survivorNotes: [
-        { default: true, tags: [], line: "Research record — Peru routes staged (rentista confirmed; worker/investor partial). Hidden from visitors." }
+        { when: { income: ["pension"] }, tags: [],
+          line: "The Rentista route accepts pension/passive income and is a confirmed route to indefinite residence; the exact financial threshold is still being verified." },
+        { when: { income: ["savings"] }, tags: [],
+          line: "The Rentista (indefinite residence) and Investor routes cover investment income — the investor route cites a UIT-based solvency requirement and a local-jobs condition. Exact amounts are still being verified." },
+        { when: { income: ["self_employed"] }, tags: [],
+          line: "The Worker and Investor routes can fit business/self-employed income (independent service contract or investment); exact thresholds and timing are still being verified. Foreign remote employment is not verified." },
+        { default: true, tags: [],
+          line: "Confirmed: Rentista, Worker, and Investor routes exist with their legal framework and issuing authority. Still being verified: exact income thresholds and some permanent-residence timing. Shown for information — verify directly." }
       ]
     },
 

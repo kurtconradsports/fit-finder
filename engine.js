@@ -83,7 +83,8 @@
       var gate = eliminationIsEnforceable(elims[i], opts);
       if (gate.ok) {
         return {
-          id: country.id, name: country.name, research: !!country.research,
+          id: country.id, name: country.name,
+          research: !!country.research, publicResearch: !!country.publicResearch,
           verdict: "ELIMINATED_HARD_CONFLICT",
           elimination: elims[i], line: elims[i].reason, tags: [],
           source: elims[i].source || country.source || null,
@@ -96,7 +97,8 @@
     }
     var note = survivorNoteFor(country, a);
     return {
-      id: country.id, name: country.name, research: !!country.research,
+      id: country.id, name: country.name,
+      research: !!country.research, publicResearch: !!country.publicResearch,
       verdict: "SURVIVES_WITH_CONTEXT",
       elimination: null, line: note.line, tags: note.tags || [],
       source: country.source || null,
@@ -106,10 +108,13 @@
   }
 
   /* Filter for what a given mode may see. Research countries are hidden
-     unless includeResearchCountries is explicitly true (dev/preview only). */
+     unless includeResearchCountries is true (dev/preview) OR the country is
+     flagged publicResearch (a deliberately-published labelled Research/Partial
+     entry — still research:true, so still excluded from survivor counts and
+     the surprise, and still non-eliminating). */
   function visibleCountries(countries, includeResearch) {
     return (countries || []).filter(function (c) {
-      return includeResearch || !c.research;
+      return includeResearch || !c.research || c.publicResearch;
     });
   }
 

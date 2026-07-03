@@ -205,16 +205,17 @@
       var head = el("div", "tile-head");
       head.appendChild(el("h3", "tile-name", r.name));
       /* Research records get a neutral, non-authoritative label — never a
-         "survives"/"ruled out" verdict (dev-only). */
+         "survives"/"ruled out" verdict. Public research (Peru/Paraguay) is
+         labelled "Research / Partial"; dev-only research keeps the old label. */
       var statusText = r.research
-        ? "Research — not verified"
+        ? R.copy.statusResearch
         : (eliminated ? R.copy.statusEliminated : R.copy.statusSurvives);
       head.appendChild(el("span", "tile-status", statusText));
       tile.appendChild(head);
 
       if (r.research) {
         tile.appendChild(el("p", "tile-research-note",
-          "Preview only. This country is still in research and is not shown to visitors or given a verdict."));
+          r.publicResearch ? R.copy.researchNotePublic : R.copy.researchNoteDev));
       }
 
       if (eliminated && r.elimination && r.elimination.nonNegotiable) {
@@ -392,7 +393,9 @@
   }
 
   function drawCard(results, surprise) {
-    var survivors = results.filter(function (r) { return r.verdict === "SURVIVES_WITH_CONTEXT"; });
+    /* Share card lists CONFIRMED survivors only — research/partial entries
+       (Peru, Paraguay) are never presented as confirmed results. */
+    var survivors = results.filter(function (r) { return r.verdict === "SURVIVES_WITH_CONTEXT" && !r.research; });
     var canvas = document.createElement("canvas");
     canvas.width = 1200;
     canvas.height = 630;
@@ -562,10 +565,25 @@
     });
     check("Every defined elimination is enforceable (meets evidence threshold)", allEnforceable);
 
-    /* Production must never expose a research record. */
+    /* Production may expose research records ONLY when flagged publicResearch;
+       any other research country (e.g. Brazil) must stay hidden. */
     var prod = E.evaluateAll(R.countries, michael, { includeResearchCountries: false });
-    check("Production results contain no research records",
-      prod.every(function (r) { return !r.research; }));
+    check("Production exposes no non-public research records",
+      prod.every(function (r) { return !r.research || r.publicResearch; }));
+    check("Production is the 6 live + Chile + Argentina + Peru + Paraguay (10), no Brazil",
+      prod.length === 10 && !prod.some(function (r) { return r.id === "brazil"; }));
+    check("Every publicResearch country stays non-eliminating & research-flagged",
+      prod.filter(function (r) { return r.publicResearch; }).every(function (r) {
+        var c = R.countries.filter(function (x) { return x.id === r.id; })[0];
+        return r.research === true && (c.eliminations || []).length === 0;
+      }));
+    /* Chile & Argentina are public survivors that never eliminate. */
+    ["chile", "argentina"].forEach(function (id) {
+      check(id + ": public, present, never eliminates", (function () {
+        var r = prod.filter(function (x) { return x.id === id; })[0];
+        return r && !r.research && r.verdict === "SURVIVES_WITH_CONTEXT";
+      })());
+    });
 
     var pass = checks.every(function (c) { return c.pass; });
     if (pass) {

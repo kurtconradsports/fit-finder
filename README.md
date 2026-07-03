@@ -31,10 +31,15 @@ date (the validator fails the build if it does).
 - **Statuses:** `official_source_confirmed` · `attorney_reviewed` · `needs_review` · `expired`.
 - **Cost, safety, healthcare, altitude, language, politics, bureaucracy, lifestyle** stay
   warnings/context (tags), **never** hard eliminations.
-- **Research countries** carry `research: true` and are hidden from production by
-  `settings.includeResearchCountries: false`. They appear **only in dev/preview mode**
-  (localhost, or `?preview=1` / `?dev=1`), clearly labelled "Research — not verified,"
-  excluded from the survivor count, and never given a verdict.
+- **Research countries** carry `research: true`. By default they are hidden from
+  production (`settings.includeResearchCountries: false`) and appear only in dev/preview
+  (localhost, or `?preview=1` / `?dev=1`). A research country flagged
+  **`publicResearch: true`** is also shown in production as a labelled **"Research /
+  Partial"** tile — it stays `research: true`, so it is still excluded from the survivor
+  count and the surprise, is never counted as a confirmed result, and can never eliminate.
+- **Current public set (10):** the six live countries + **Chile** and **Argentina**
+  (normal survivors, no elimination rules) + **Peru** and **Paraguay** (`publicResearch`,
+  labelled Research/Partial). **Brazil** stays hidden (`routes: []`, no meaningful result).
 - Country-level `coverage` (`live`/`partial`/`research`) is **derived** from claims and
   **never** overrides an individual claim's status.
 

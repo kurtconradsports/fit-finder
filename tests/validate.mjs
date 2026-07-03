@@ -91,12 +91,20 @@ for (const c of R.countries) {
   }
 }
 
-/* ---- Invariant 3: research countries never appear in production ---- */
+/* ---- Invariant 3: research countries never appear in production UNLESS
+        explicitly flagged publicResearch (labelled Research/Partial). ---- */
 const anyAnswer = { residency: "permanent", income: "remote", budget: "b3k_4500", household: "couple" };
 const prodAll = E.evaluateAll(R.countries, anyAnswer, { includeResearchCountries: false });
-assert("[research-hidden] no research record in production results",
-  prodAll.every((r) => !r.research),
-  prodAll.filter((r) => r.research).map((r) => r.id).join(",") || null);
+assert("[research-hidden] no NON-public research record in production results",
+  prodAll.every((r) => !r.research || r.publicResearch),
+  prodAll.filter((r) => r.research && !r.publicResearch).map((r) => r.id).join(",") || null);
+/* Any publicResearch country must remain research-flagged (excluded from
+   survivor count + surprise) and non-eliminating. */
+for (const c of R.countries.filter((x) => x.publicResearch)) {
+  assert(`[public-research] ${c.id} is research:true (excluded from counts/surprise)`, c.research === true);
+  assert(`[public-research] ${c.id} is non-eliminating`, (c.eliminations || []).length === 0);
+  assert(`[public-research] ${c.id} is visible in production`, prodAll.some((r) => r.id === c.id));
+}
 const researchDefined = R.countries.filter((c) => c.research).map((c) => c.id);
 
 /* ---- Synthetic fixtures: prove each gate independently, even before the
@@ -167,12 +175,14 @@ for (const o1 of R.questions[0].options)
         for (const r of E.evaluateAll(R.countries, a, { includeResearchCountries: false })) {
           if (!["ELIMINATED_HARD_CONFLICT", "SURVIVES_WITH_CONTEXT"].includes(r.verdict)) twoStates = false;
           if (r.verdict === "ELIMINATED_HARD_CONFLICT") {
-            if (["mexico", "ecuador", "uruguay"].includes(r.id)) neverElim = false;
+            /* No never-eliminating country may ever hard-eliminate — includes the
+               four newly-visible staged countries (they have no rules). */
+            if (["mexico", "ecuador", "uruguay", "chile", "argentina", "peru", "paraguay"].includes(r.id)) neverElim = false;
             if (!r.elimination || !r.elimination.reason || !r.source) allDoc = false;
           }
         }
       }
-assert("[behaviour] 240 combos: Mexico/Ecuador/Uruguay never eliminate", neverElim);
+assert("[behaviour] 240 combos: Mexico/Ecuador/Uruguay + Chile/Argentina/Peru/Paraguay never eliminate", neverElim);
 assert("[behaviour] 240 combos: strictly two verdict states", twoStates);
 assert("[behaviour] 240 combos: every elimination documented", allDoc);
 
@@ -249,14 +259,39 @@ assert("[teeth] coverage: verified-from-partial caught",
 assert("[teeth] coverage: good record passes",
   E.coverageIsSafe({ research: true, coverage: "partial", eliminations: [], routes: [{ verification: { status: "official_source_confirmed" } }] }).ok);
 
-/* ---- All five new countries hidden + never eliminate ---- */
+/* ---- Release classification: all five staged countries never eliminate;
+        Chile/Argentina public survivors; Peru/Paraguay public research;
+        Brazil hidden. ---- */
 const NEW = ["chile", "argentina", "paraguay", "peru", "brazil"];
 for (const id of NEW) {
   const c = R.countries.find((x) => x.id === id);
-  assert(`[new-country] ${id} exists and is research:true`, c && c.research === true);
-  assert(`[new-country] ${id} has no eliminations (cannot rule out)`, c && (c.eliminations || []).length === 0);
-  assert(`[new-country] ${id} absent from production`, !prodAll.some((r) => r.id === id));
+  assert(`[staged] ${id} exists`, !!c);
+  assert(`[staged] ${id} has no eliminations (cannot rule out)`, c && (c.eliminations || []).length === 0);
 }
+/* Chile & Argentina — PUBLIC normal survivors. */
+for (const id of ["chile", "argentina"]) {
+  const c = R.countries.find((x) => x.id === id);
+  assert(`[release] ${id} is public (research:false)`, c.research === false);
+  assert(`[release] ${id} present in production`, prodAll.some((r) => r.id === id));
+  assert(`[release] ${id} carries no staging language`,
+    !(c.survivorNotes || []).some((n) => /research record|hidden from visitors/i.test(n.line || "")));
+}
+/* Peru & Paraguay — PUBLIC research/partial. */
+for (const id of ["peru", "paraguay"]) {
+  const c = R.countries.find((x) => x.id === id);
+  assert(`[release] ${id} is publicResearch + research:true`, c.publicResearch === true && c.research === true);
+  assert(`[release] ${id} present in production`, prodAll.some((r) => r.id === id));
+  assert(`[release] ${id} carries no staging language`,
+    !(c.survivorNotes || []).some((n) => /research record|hidden from visitors/i.test(n.line || "")));
+}
+/* Brazil — HIDDEN. */
+const brazil = R.countries.find((x) => x.id === "brazil");
+assert("[release] brazil hidden (research:true, not publicResearch)", brazil.research === true && !brazil.publicResearch);
+assert("[release] brazil absent from production", !prodAll.some((r) => r.id === "brazil"));
+assert("[release] brazil has zero routes (intentional)", (brazil.routes || []).length === 0);
+/* Public country count = 10. */
+assert("[release] production shows exactly 10 countries",
+  prodAll.length === 10, "got " + prodAll.length + ": " + prodAll.map((r) => r.id).join(","));
 
 /* ---- backlog: incomplete countries + claims (machine-readable) ---- */
 const incomplete = { countries: [], claims: [] };
