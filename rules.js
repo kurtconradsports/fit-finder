@@ -849,23 +849,131 @@ var FIT_RULES = {
       id: "peru",
       name: "Peru",
       research: true,
-      coverage: "research",
+      coverage: "partial",           /* rentista confirmed; worker/investor needs_review */
       eliminations: [],
-      governingLaw: null,
-      authority: null,
-      routes: [],
+      governingLaw: null,            /* legal instrument not included in the provided report text — do not invent */
+      authority: null,              /* authority not included in the provided report text — do not invent */
+      routes: [
+        {
+          routeName: "Calidad Migratoria Rentista Residente",
+          servesIncomeTypes: ["savings"],
+          officialServesDescription: "Rentista (passive/rent income) residence. Direct indefinite-residence finding; indefinite and not renewable.",
+          verification: {
+            status: "official_source_confirmed",
+            governmentAuthority: null,
+            legalInstrument: null,
+            sourceTitle: "Official Immigration Verification Pass (Peru)",
+            sourceUrl: null,
+            lastChecked: "2026-07-03",
+            reviewedBy: "Official Immigration Verification Pass (provided report), 2026-07-03",
+            confidence: "high",
+            uncertaintyNotes: "Direct indefinite-residence finding confirmed (high confidence). Financial amount remains needs_review. Exact source URL / legal instrument / authority to be transcribed from the full report.",
+            professionalVerificationRecommended: true
+          },
+          permanence: {
+            pathType: "direct_permanent",
+            eligibleToApply: null,
+            standardEligibilityMonths: null,
+            possibleReducedEligibilityMonths: null,
+            reductionIsDiscretionary: false,
+            approvalGuaranteed: false,
+            presenceRequirements: null,
+            absenceCancellationRules: null,
+            notes: "Indefinite; not renewable; direct indefinite-residence finding."
+          },
+          threshold: {
+            thresholdType: "unverified",
+            localAmount: null, localCurrency: null, calculationBasis: null, effectiveDate: null,
+            usdEstimate: null, usdEstimateDate: null, usdEstimateSource: null,
+            thresholdNotes: "Financial amount remains needs_review — do not invent."
+          },
+          notes: null
+        },
+        {
+          routeName: "Cambio de Calidad Migratoria Trabajador Residente",
+          servesIncomeTypes: [],   /* independent service contract — NOT foreign remote employment; do not invent a mapping */
+          officialServesDescription: "Worker change-of-category. Independent service contract of at least one year is supported; permanent change-of-category procedure is supported.",
+          verification: {
+            status: "needs_review",
+            governmentAuthority: null,
+            legalInstrument: null,
+            sourceTitle: "Official Immigration Verification Pass (Peru)",
+            sourceUrl: null,
+            lastChecked: null,
+            reviewedBy: "Official Immigration Verification Pass (provided report), 2026-07-03",
+            confidence: "medium",
+            uncertaintyNotes: "Medium/partial confidence. 1-year independent service contract and permanent change-of-category supported; exact threshold and permanent-residence timing remain needs_review. Do NOT map to foreign remote employment.",
+            professionalVerificationRecommended: true
+          },
+          permanence: {
+            pathType: "eligible_to_apply",
+            eligibleToApply: true,
+            standardEligibilityMonths: null,
+            possibleReducedEligibilityMonths: null,
+            reductionIsDiscretionary: false,
+            approvalGuaranteed: false,
+            presenceRequirements: null,
+            absenceCancellationRules: null,
+            notes: "Permanent change-of-category procedure supported; timing remains needs_review."
+          },
+          threshold: {
+            thresholdType: "unverified",
+            localAmount: null, localCurrency: null, calculationBasis: null, effectiveDate: null,
+            usdEstimate: null, usdEstimateDate: null, usdEstimateSource: null,
+            thresholdNotes: "Exact threshold remains needs_review."
+          },
+          notes: null
+        },
+        {
+          routeName: "Calidad Migratoria Inversionista Residente",
+          servesIncomeTypes: ["savings"],
+          officialServesDescription: "Investor residence. 365 days, renewable; 10 UIT solvency language; 10 Peruvian jobs requirement; permanent change-of-category procedure is supported.",
+          verification: {
+            status: "needs_review",
+            governmentAuthority: null,
+            legalInstrument: null,
+            sourceTitle: "Official Immigration Verification Pass (Peru)",
+            sourceUrl: null,
+            lastChecked: null,
+            reviewedBy: "Official Immigration Verification Pass (provided report), 2026-07-03",
+            confidence: "medium",
+            uncertaintyNotes: "Medium/partial confidence. 365 days renewable; 10 UIT solvency; 10 Peruvian jobs; permanent change-of-category supported. Exact 2026 UIT amount remains needs_review.",
+            professionalVerificationRecommended: true
+          },
+          permanence: {
+            pathType: "eligible_to_apply",
+            eligibleToApply: true,
+            standardEligibilityMonths: null,
+            possibleReducedEligibilityMonths: null,
+            reductionIsDiscretionary: false,
+            approvalGuaranteed: false,
+            presenceRequirements: null,
+            absenceCancellationRules: null,
+            notes: "365 days, renewable; 10 Peruvian jobs requirement; permanent change-of-category supported; timing remains needs_review."
+          },
+          threshold: {
+            thresholdType: "unverified",
+            localAmount: null, localCurrency: null,
+            calculationBasis: "10 UIT (solvency language)",
+            effectiveDate: null,
+            usdEstimate: null, usdEstimateDate: null, usdEstimateSource: null,
+            thresholdNotes: "Exact 2026 UIT amount remains needs_review — do not compute."
+          },
+          notes: null
+        }
+      ],
       absenceOfEvidence: [],
       verification: {
         status: "needs_review",
         routeName: null,
-        claim: "Skeleton — no verified routes yet.",
+        claim: "Three routes staged (rentista confirmed; worker/investor partial). Country not production-ready.",
         governmentAuthority: null, sourceTitle: null, sourceUrl: null, legalInstrument: null,
         lastChecked: null, reviewedBy: null,
-        reviewNotes: "Awaiting primary-source research. No invented sources or thresholds.",
-        confidence: "low", professionalVerificationRecommended: true
+        reviewNotes: "Rentista confirmed (high confidence, direct indefinite residence); worker/investor medium/partial. Amounts and timing remain needs_review. No invented sources.",
+        confidence: "medium", professionalVerificationRecommended: true
       },
       survivorNotes: [
-        { default: true, tags: [], line: "Research record — Peru skeleton, no verified routes. Hidden from visitors." }
+        { default: true, tags: [], line: "Research record — Peru routes staged (rentista confirmed; worker/investor partial). Hidden from visitors." }
       ]
     },
 
