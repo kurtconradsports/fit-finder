@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Latin America Fit Finder — The Expat Escape Plan</title>
+<meta name="description" content="See which Latin American countries survive your non-negotiables — and why the others fall away. Elimination on facts, not black-box rankings.">
+<meta property="og:title" content="Latin America Fit Finder">
+<meta property="og:description" content="Which Latin American countries survive your non-negotiables? Start with what has to work — not beaches or rankings.">
+<meta property="og:type" content="website">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="brand" role="banner">
+  <span class="brand-name">The Expat Escape Plan</span>
+  <span class="brand-sep" aria-hidden="true">·</span>
+  <span class="brand-tool">Fit Finder</span>
+</header>
+
+<main>
+  <section class="hero">
+    <h1 id="headline"></h1>
+    <p class="subhead" id="subhead"></p>
+  </section>
+
+  <section class="controls" id="controls" aria-label="Your non-negotiables"></section>
+
+  <p class="progress-hint" id="progressHint"></p>
+
+  <section class="tiles" id="tiles" aria-label="Country tiles"></section>
+
+  <section class="result" id="result" aria-live="polite"></section>
+</main>
+
+<footer class="site-foot">
+  <p class="disclaimer" id="disclaimer"></p>
+</footer>
+
+<noscript><p class="noscript">The Fit Finder needs JavaScript to respond to your answers.</p></noscript>
+
+<script src="rules.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
