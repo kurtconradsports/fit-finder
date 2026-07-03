@@ -110,8 +110,8 @@ opened directly as a file (`index.html`).
 ## Analytics
 
 **Live dashboard: https://expatescape.goatcounter.com** — log in as
-kurtconradsports@gmail.com (password in expat-escape-ops `config/secrets.env`,
-`GOATCOUNTER_PASSWORD`; change it after first login). Pageviews are counted
+kurtconradsports@gmail.com (credentials stored locally, outside this repo;
+change the password after first login). Pageviews are counted
 automatically; the §8 events appear under the "events" filter as paths
 (`finder_start`, `result_reached`, `surprise_elimination_shown/colombia`, …).
 Caveats: adblockers block GoatCounter (undercounts, like every client-side
