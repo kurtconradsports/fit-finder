@@ -849,25 +849,27 @@ var FIT_RULES = {
       id: "peru",
       name: "Peru",
       research: true,
-      coverage: "partial",           /* rentista confirmed; worker/investor needs_review */
+      coverage: "partial",           /* route existence/framework confirmed; amounts & timing needs_review */
       eliminations: [],
-      governingLaw: null,            /* legal instrument not included in the provided report text — do not invent */
-      authority: null,              /* authority not included in the provided report text — do not invent */
+      /* Legal framework + authority for all three routes, from the Official
+         Immigration Verification Pass (Peru). Per-route source metadata below. */
+      governingLaw: "Decreto Legislativo 1350; Decreto Supremo 007-2017-IN; TUPA MIGRACIONES 2023",
+      authority: "Superintendencia Nacional de Migraciones",
       routes: [
         {
           routeName: "Calidad Migratoria Rentista Residente",
-          servesIncomeTypes: ["savings"],
-          officialServesDescription: "Rentista (passive/rent income) residence. Direct indefinite-residence finding; indefinite and not renewable.",
+          servesIncomeTypes: ["pension", "savings"],
+          officialServesDescription: "Rentista residence for pension/retirement and savings/investment income. Direct indefinite-residence finding; indefinite and not renewable.",
           verification: {
             status: "official_source_confirmed",
-            governmentAuthority: null,
-            legalInstrument: null,
-            sourceTitle: "Official Immigration Verification Pass (Peru)",
-            sourceUrl: null,
+            governmentAuthority: "Superintendencia Nacional de Migraciones",
+            legalInstrument: "Decreto Legislativo 1350; Decreto Supremo 007-2017-IN; TUPA MIGRACIONES 2023",
+            sourceTitle: "Texto Único de Procedimientos Administrativos de MIGRACIONES",
+            sourceUrl: "https://www.gob.pe/institucion/migraciones/informes-publicaciones/2770424-texto-unico-de-procedimientos-administrativos-tupa",
             lastChecked: "2026-07-03",
             reviewedBy: "Official Immigration Verification Pass (provided report), 2026-07-03",
             confidence: "high",
-            uncertaintyNotes: "Direct indefinite-residence finding confirmed (high confidence). Financial amount remains needs_review. Exact source URL / legal instrument / authority to be transcribed from the full report.",
+            uncertaintyNotes: "Route existence, legal framework, authority, official source, and direct indefinite-residence finding confirmed (high confidence). Financial amount remains needs_review.",
             professionalVerificationRecommended: true
           },
           permanence: {
@@ -891,18 +893,18 @@ var FIT_RULES = {
         },
         {
           routeName: "Cambio de Calidad Migratoria Trabajador Residente",
-          servesIncomeTypes: [],   /* independent service contract — NOT foreign remote employment; do not invent a mapping */
-          officialServesDescription: "Worker change-of-category. Independent service contract of at least one year is supported; permanent change-of-category procedure is supported.",
+          servesIncomeTypes: ["self_employed"],   /* self-employed/business (independent service contract) — NOT foreign remote employment */
+          officialServesDescription: "Worker change-of-category for self-employed/business income. Independent service contract of at least one year is supported; permanent change-of-category procedure is supported. Foreign remote employment remains unverified.",
           verification: {
-            status: "needs_review",
-            governmentAuthority: null,
-            legalInstrument: null,
-            sourceTitle: "Official Immigration Verification Pass (Peru)",
-            sourceUrl: null,
-            lastChecked: null,
+            status: "official_source_confirmed",
+            governmentAuthority: "Superintendencia Nacional de Migraciones",
+            legalInstrument: "Decreto Legislativo 1350; Decreto Supremo 007-2017-IN; TUPA MIGRACIONES 2023",
+            sourceTitle: "Texto Único de Procedimientos Administrativos de MIGRACIONES",
+            sourceUrl: "https://www.gob.pe/institucion/migraciones/informes-publicaciones/2770424-texto-unico-de-procedimientos-administrativos-tupa",
+            lastChecked: "2026-07-03",
             reviewedBy: "Official Immigration Verification Pass (provided report), 2026-07-03",
             confidence: "medium",
-            uncertaintyNotes: "Medium/partial confidence. 1-year independent service contract and permanent change-of-category supported; exact threshold and permanent-residence timing remain needs_review. Do NOT map to foreign remote employment.",
+            uncertaintyNotes: "Route existence, legal framework, authority, official source, the 1-year independent-service-contract basis, and the permanent change-of-category procedure are confirmed. Exact threshold and permanent-residence timing remain needs_review. Foreign remote employment remains unverified — do NOT map.",
             professionalVerificationRecommended: true
           },
           permanence: {
@@ -914,7 +916,7 @@ var FIT_RULES = {
             approvalGuaranteed: false,
             presenceRequirements: null,
             absenceCancellationRules: null,
-            notes: "Permanent change-of-category procedure supported; timing remains needs_review."
+            notes: "Permanent change-of-category procedure supported; exact timing remains needs_review."
           },
           threshold: {
             thresholdType: "unverified",
@@ -926,18 +928,18 @@ var FIT_RULES = {
         },
         {
           routeName: "Calidad Migratoria Inversionista Residente",
-          servesIncomeTypes: ["savings"],
-          officialServesDescription: "Investor residence. 365 days, renewable; 10 UIT solvency language; 10 Peruvian jobs requirement; permanent change-of-category procedure is supported.",
+          servesIncomeTypes: ["self_employed", "savings"],
+          officialServesDescription: "Investor residence for self-employed/business and savings/investment income. 365 days, renewable; 10 UIT solvency language; 10 Peruvian jobs requirement; permanent change-of-category procedure is supported.",
           verification: {
-            status: "needs_review",
-            governmentAuthority: null,
-            legalInstrument: null,
-            sourceTitle: "Official Immigration Verification Pass (Peru)",
-            sourceUrl: null,
-            lastChecked: null,
+            status: "official_source_confirmed",
+            governmentAuthority: "Superintendencia Nacional de Migraciones",
+            legalInstrument: "Decreto Legislativo 1350; Decreto Supremo 007-2017-IN; TUPA MIGRACIONES 2023",
+            sourceTitle: "Texto Único de Procedimientos Administrativos de MIGRACIONES",
+            sourceUrl: "https://www.gob.pe/institucion/migraciones/informes-publicaciones/2770424-texto-unico-de-procedimientos-administrativos-tupa",
+            lastChecked: "2026-07-03",
             reviewedBy: "Official Immigration Verification Pass (provided report), 2026-07-03",
             confidence: "medium",
-            uncertaintyNotes: "Medium/partial confidence. 365 days renewable; 10 UIT solvency; 10 Peruvian jobs; permanent change-of-category supported. Exact 2026 UIT amount remains needs_review.",
+            uncertaintyNotes: "Route existence, legal framework, authority, official source, 365-day renewable duration, 10 UIT solvency language, 10 Peruvian jobs requirement, and permanent change-of-category procedure are confirmed. Exact 2026 UIT amount remains needs_review.",
             professionalVerificationRecommended: true
           },
           permanence: {
@@ -949,7 +951,7 @@ var FIT_RULES = {
             approvalGuaranteed: false,
             presenceRequirements: null,
             absenceCancellationRules: null,
-            notes: "365 days, renewable; 10 Peruvian jobs requirement; permanent change-of-category supported; timing remains needs_review."
+            notes: "365 days, renewable; 10 Peruvian jobs requirement; permanent change-of-category supported; exact timing remains needs_review."
           },
           threshold: {
             thresholdType: "unverified",
@@ -966,10 +968,13 @@ var FIT_RULES = {
       verification: {
         status: "needs_review",
         routeName: null,
-        claim: "Three routes staged (rentista confirmed; worker/investor partial). Country not production-ready.",
-        governmentAuthority: null, sourceTitle: null, sourceUrl: null, legalInstrument: null,
+        claim: "Three routes staged; existence/framework/authority/source confirmed. Country not production-ready (amounts and timing needs_review).",
+        governmentAuthority: "Superintendencia Nacional de Migraciones",
+        sourceTitle: "Texto Único de Procedimientos Administrativos de MIGRACIONES",
+        sourceUrl: "https://www.gob.pe/institucion/migraciones/informes-publicaciones/2770424-texto-unico-de-procedimientos-administrativos-tupa",
+        legalInstrument: "Decreto Legislativo 1350; Decreto Supremo 007-2017-IN; TUPA MIGRACIONES 2023",
         lastChecked: null, reviewedBy: null,
-        reviewNotes: "Rentista confirmed (high confidence, direct indefinite residence); worker/investor medium/partial. Amounts and timing remain needs_review. No invented sources.",
+        reviewNotes: "Route existence/framework confirmed for all three; exact amounts and permanent-residence timing remain needs_review. Foreign remote employment unverified.",
         confidence: "medium", professionalVerificationRecommended: true
       },
       survivorNotes: [
